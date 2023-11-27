@@ -3,10 +3,12 @@ package cmdr
 import (
 	"embed"
 	"errors"
-	"log"
+	"io"
 	"os"
 	"path"
 	"time"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/fitv/go-i18n"
 	"github.com/spf13/viper"
@@ -22,6 +24,7 @@ type App struct {
 	Version     string
 	RootCommand *Command
 	Logger      *log.Logger
+	Log         *log.Logger
 	logFile     *os.File
 	locales     embed.FS
 	*i18n.I18n
@@ -31,8 +34,6 @@ type App struct {
 // It requires an embed.FS with a top level directory
 // named 'locales'.
 func NewApp(name string, version string, locales embed.FS) *App {
-	// for application logs
-	orchid.InitLog(name+" : 	", log.LstdFlags)
 
 	viper.SetEnvPrefix(name)
 	viper.AutomaticEnv()
@@ -43,28 +44,37 @@ func NewApp(name string, version string, locales embed.FS) *App {
 		os.Exit(1)
 	}
 	i18n.SetDefaultLocale(orchid.Locale())
+
+	plog := log.New(os.Stderr)
+
 	a := &App{
 		Name:    name,
-		Logger:  log.Default(),
 		I18n:    i18n,
 		Version: version,
+		Log:     plog,
 		locales: locales,
 	}
-	err = a.logSetup()
+	// for application file logs
+	err, w := a.logSetup()
 	if err != nil {
 		log.Printf("error setting up logging: %v", err)
 	}
-	return a
+	a.Logger = log.NewWithOptions(w, log.Options{
+		ReportCaller:    true,
+		ReportTimestamp: true,
+	})
 
+	return a
 }
-func (a *App) logSetup() error {
+
+func (a *App) logSetup() (error, io.Writer) {
 	err := a.ensureLogDir()
 	if err != nil {
-		return err
+		return err, nil
 	}
 	logDir, err := getLogDir(a.Name)
 	if err != nil {
-		return err
+		return err, nil
 	}
 	logFile := path.Join(logDir, a.Name+".log")
 	//create your file with desired read/write permissions
@@ -74,9 +84,7 @@ func (a *App) logSetup() error {
 	}
 	a.logFile = f
 
-	//set output of logs to f
-	log.SetOutput(a.logFile)
-	return nil
+	return nil, f
 
 }
 func (a *App) CreateRootCommand(c *Command) {
@@ -167,7 +175,6 @@ func (a *App) docDescription(d *roff.Document) {
 func (a *App) docOptions(d *roff.Document) {
 	d.Section("Options")
 	d.Text(a.RootCommand.Flags().FlagUsages())
-
 }
 
 func (a *App) docCommands(d *roff.Document) {

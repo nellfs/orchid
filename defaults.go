@@ -18,13 +18,6 @@ func init() {
 	// other future defaults
 }
 
-// InitLog initializes the std logging package
-// with the provided prefix and flags.
-func InitLog(prefix string, flags int) {
-	l.Prefix(prefix)
-	l.Flags(flags)
-}
-
 // Locale returns the two digit locale code
 // from the LANG environment variable, or "en"
 // if unset.

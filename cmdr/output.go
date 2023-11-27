@@ -1,6 +1,9 @@
 package cmdr
 
-import "github.com/pterm/pterm"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pterm/pterm"
+)
 
 type BulletListItem = pterm.BulletListItem
 type Style = pterm.Style
@@ -127,6 +130,43 @@ var (
 	NewStyle                                                 func(...Color) *Style
 	EnableColor, DisableColor                                func()
 )
+
+type model struct {
+	confirm bool
+	Message string
+}
+
+type message string
+
+func (m model) Init() tea.Cmd {
+	return nil
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	case message:
+		return model{Message: string(msg)}, nil
+	}
+
+	return m, nil
+}
+
+func (m model) View() string {
+	s := "Hello world!"
+	s += "\nPress q to quit.\n"
+	return s
+}
+
+func InitialModel() model {
+	return model{
+		confirm: false,
+	}
+}
 
 func init() {
 	Error = pterm.Error
