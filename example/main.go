@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"errors"
+
 	"log"
 	"strings"
 	"time"
@@ -27,7 +28,8 @@ func main() {
 	// this is output to the user outside the scope of a command
 	//cmdr.Info.Println("I'm a bean")
 	// this is written to ~/.local/share/[appname]/[appname].log
-	bean.Logger.Println("I'm written to the logs")
+	bean.Log.Warn("Printed Warning :)")
+	bean.Logger.Warn("Warning to .log :)")
 
 	// root command
 	root := cmdr.NewCommand(
@@ -80,7 +82,6 @@ func main() {
 	err := bean.Run()
 	if err != nil {
 		cmdr.Error.Println(err)
-
 	}
 
 }
@@ -129,7 +130,9 @@ func doBean(cmd *cobra.Command, args []string) error {
 }
 
 func roast(cmd *cobra.Command, args []string) error {
+
 	cmdr.Warning.Println("Warming up the roaster")
+
 	// local flag on do
 	var name string
 	name = cmdr.FlagValString(nameFlag)
